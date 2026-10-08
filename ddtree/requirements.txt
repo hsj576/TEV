@@ -1,0 +1,10 @@
+torch>=2.6
+transformers>=4.53
+datasets
+flash-attn
+numpy
+loguru
+tqdm
+typing_extensions
+ninja
+gradio>=4.0

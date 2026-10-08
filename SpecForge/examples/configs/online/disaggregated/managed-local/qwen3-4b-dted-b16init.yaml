@@ -1,0 +1,72 @@
+model:
+  target_model_path: "/dockerdata/models/Qwen3-4B"
+  draft_model_config: "configs/qwen3-4b-dted.json"
+  draft_checkpoint_path: "/dockerdata/models/Qwen3-4B-DFlash-b16"
+  target_backend: "sglang"
+  trust_remote_code: true
+  embedding_key: "model.embed_tokens.weight"
+  torch_dtype: "bfloat16"
+  mask_token_id: 151669
+data:
+  train_data_path: "/dockerdata/datasets/qwen3_4b_regen/perfectblend_train_regen.jsonl"
+  max_length: 3072
+  chat_template: "qwen"
+  build_dataset_num_proc: 32
+  cache_dir: "/dockerdata/specforge_cache/qwen3-4b-dted"
+training:
+  strategy: "dted"
+  num_epochs: 1
+  batch_size: 4
+  learning_rate: 0.00001
+  warmup_ratio: 0.01
+  max_grad_norm: 1
+  attention_backend: "flex_attention"
+  num_anchors: 256
+  save_interval: 10000
+  log_interval: 10
+  dist_timeout: 600
+  seed: 42
+  dted_tree_budget: 64
+  dted_alpha: 1.0e-4
+  dted_eps: 1.0e-8
+  dted_weight_type: "exit"
+runtime:
+  producer_lease: 64
+  producer_concurrency: 8
+  in_flight_high_watermark: 768
+  in_flight_low_watermark: 384
+tracking:
+  report_to: "swanlab"
+  swanlab_project: "specforge-qwen3-4b-dted"
+  swanlab_name: "qwen3-4b-dted-b16init-1ep-lr1e5"
+run_id: "qwen3-4b-dted-b16init-1ep-lr1e5"
+output_dir: "/dockerdata/specforge_outputs/qwen3-4b-dted-b16init-1ep-lr1e5"
+
+deployment:
+  mode: disaggregated
+  trainer:
+    nnodes: 1
+    nproc_per_node: 7
+  disaggregated:
+    control_dir: /dockerdata/specforge_outputs/qwen3-4b-dted-b16init-1ep-lr1e5/control
+    backend: mooncake
+    managed_local:
+      trainer_cuda_visible_devices:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "7"
+      mooncake:
+        protocol: tcp
+        global_segment_size_bytes: 34359738368
+        local_buffer_size_bytes: 1073741824
+        default_kv_lease_ttl_ms: 300000
+      capture_servers:
+        - port: 30000
+          cuda_visible_devices:
+            - "0"
+          tp_size: 1
+          mem_fraction_static: 0.5

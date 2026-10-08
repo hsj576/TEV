@@ -1,0 +1,93 @@
+model:
+  # Path to the HuggingFace directory of the Qwen3-Coder-30B-A3B-Instruct
+  # target model (qwen3_moe: 48 layers, 128 experts, 8 active).
+  target_model_path: "<PATH_TO_TARGET_MODEL>/Qwen3-Coder-30B-A3B-Instruct"
+  draft_model_config: "configs/qwen3-coder-30b-a3b-dted.json"
+  # Warm-start from a Qwen3-Coder-30B DFlash-family checkpoint
+  # (draft has 8 layers, target_layer_ids=[1,12,23,34,45]).
+  draft_checkpoint_path: "<PATH_TO_DRAFT_CHECKPOINT>/Qwen3-Coder-30B-A3B-DFlash"
+  target_backend: "sglang"
+  trust_remote_code: true
+  embedding_key: "model.embed_tokens.weight"
+  torch_dtype: "bfloat16"
+  mask_token_id: 151669
+  # Bump sglang_mem_fraction_static because the target weights are ~60 GB
+  # (vs. ~16 GB for a dense 8B model).
+  sglang_mem_fraction_static: 0.65
+data:
+  train_data_path: "<PATH_TO_TRAIN_DATA>/qwen3_30b_regen/perfectblend_train_regen_qwen3_coder_30b.jsonl"
+  max_length: 3072
+  chat_template: "qwen"
+  build_dataset_num_proc: 32
+  cache_dir: "<PATH_TO_CACHE>/qwen3-coder-30b-a3b-exittrain"
+training:
+  # ExitTrain recipe (aligned with the Qwen3-4B/8B recipe): full-tree
+  # target verify using a small tree, 32 anchors, 2 epochs, lr=1e-4.
+  #
+  # Config:
+  #   num_anchors=32
+  #   tree_budget=32 (matches inference-time small-tree profile)
+  #   num_epochs=2
+  strategy: "exittrain"
+  num_epochs: 2
+  batch_size: 4
+  learning_rate: 0.0001
+  warmup_ratio: 0.005
+  max_grad_norm: 1
+  attention_backend: "flex_attention"
+  num_anchors: 32
+  save_interval: 5000
+  log_interval: 10
+  dist_timeout: 600
+  seed: 42
+  # DTED shared knobs (reused verbatim by ExitTrain).
+  dted_tree_budget: 32
+  dted_alpha: 1.0e-4
+  dted_eps: 1.0e-8
+  dted_weight_type: "P_tgt"
+  dted_ce_weight: 1.0
+  dted_reinforce_weight: 0.1
+  # ExitTrain-specific knobs.
+  exittrain_prefix_window: 64
+  exittrain_target_dtype: "bfloat16"
+runtime:
+  producer_lease: 64
+  producer_concurrency: 8
+  in_flight_high_watermark: 768
+  in_flight_low_watermark: 384
+tracking:
+  report_to: "swanlab"
+  swanlab_project: "specforge-qwen3-coder-30b-a3b-exittrain"
+  swanlab_name: "qwen3-coder-30b-a3b-exittrain"
+  # Set via the SWANLAB_API_KEY environment variable in your launch script.
+run_id: "qwen3-coder-30b-a3b-exittrain"
+output_dir: "<PATH_TO_OUTPUT>/qwen3-coder-30b-a3b-exittrain"
+
+deployment:
+  mode: disaggregated
+  trainer:
+    nnodes: 1
+    nproc_per_node: 7
+  disaggregated:
+    control_dir: <PATH_TO_OUTPUT>/qwen3-coder-30b-a3b-exittrain/control
+    backend: mooncake
+    managed_local:
+      trainer_cuda_visible_devices:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "7"
+      mooncake:
+        protocol: tcp
+        global_segment_size_bytes: 34359738368
+        local_buffer_size_bytes: 1073741824
+        default_kv_lease_ttl_ms: 300000
+      capture_servers:
+        - port: 30000
+          cuda_visible_devices:
+            - "0"
+          tp_size: 1
+          mem_fraction_static: 0.65

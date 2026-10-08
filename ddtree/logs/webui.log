@@ -1,0 +1,10 @@
+nohup: ignoring input
+[webui] loading target='/dockerdata/models/Qwen3-4B'  draft='/apdcephfs_bj36/share_306151639/shijinghu/models/Qwen3-4B-DFlash-fullverify'
+2026-09-23 21:18:43.889 | INFO     | ddtree:load_cpp_compact_module:97 - Loaded inline C++ tail cache compaction extension for DDTree.
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 164.23it/s]
+[webui] warmup ... (this compiles the C++ compaction extension once)
+[webui] warmup done. Launching gradio ...
+/apdcephfs_bj36/share_306151639/shijinghu/TEV-ICLR/ddtree/application/webui.py:398: UserWarning: The 'tuples' format for chatbot messages is deprecated and will be removed in a future version of Gradio. Please set type='messages' instead, which uses openai-style 'role' and 'content' keys.
+  chatbot = gr.Chatbot(height=560, show_label=False, type="tuples")
+* Running on local URL:  http://0.0.0.0:7860
+* To create a public link, set `share=True` in `launch()`.

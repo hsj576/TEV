@@ -1,0 +1,31 @@
+SpecForge (with ExitTrain fork)
+================================
+
+This project is a fork of SpecForge (https://github.com/sgl-project/SpecForge)
+maintained by the SGLang team, and is distributed under the same MIT license
+as the upstream project (see LICENSE).
+
+Upstream copyright:
+    Copyright (c) 2025 sgl-project
+
+Modifications and additions in this fork:
+    Copyright (c) 2026 The authors of the accompanying ICLR submission
+
+The main additions relative to upstream are:
+
+* A new training method registered as ``strategy: "exittrain"`` implementing
+  a full-tree target-verify variant of DTED (Tree-Expected Decoding).
+  See specforge/algorithms/exittrain/ and the "ExitTrain" section of README.md.
+* Example configurations and launch scripts for reproducing ExitTrain
+  training runs on Qwen3-4B, Qwen3-8B, Llama-3.1-8B-Instruct, and
+  Qwen3-Coder-30B-A3B-Instruct targets.
+
+All other SpecForge components (algorithms, application layer, config
+system, runtime data plane, disaggregated launcher, etc.) are inherited
+from upstream and remain under upstream copyright.
+
+Portions of individual source files carry per-file copyright headers with
+"Licensed under the Apache License, Version 2.0" language inherited from
+upstream. Those headers describe the *file-level* license SpecForge
+originally applied inside its MIT-licensed distribution and are preserved
+verbatim for provenance.
